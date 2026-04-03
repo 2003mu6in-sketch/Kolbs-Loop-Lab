@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoopLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2026;
+    --surface3: #252830;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e9ec;
+    --text2: #8a8d96;
+    --text3: #555860;
+    --accent: #6c63ff;
+    --accent-soft: rgba(108,99,255,0.12);
+    --accent-border: rgba(108,99,255,0.3);
+    --green: #3ecf8e;
+    --green-soft: rgba(62,207,142,0.1);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245,158,11,0.1);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.1);
+    --serif: 'DM Serif Display', serif;
+    --sans: 'Outfit', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --sidebar-w: 240px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-mark {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .logo-mark span { color: var(--accent); }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 16px 20px 8px;
+  }
+  .problem-list { flex: 1; overflow-y: auto; padding: 0 10px 10px; }
+  .problem-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+    position: relative;
+  }
+  .problem-item:hover { background: var(--surface2); }
+  .problem-item.active {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+  }
+  .problem-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .problem-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .problem-item.active .problem-name { color: var(--text); }
+  .problem-streak {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    background: var(--surface3);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  .problem-item.active .problem-streak {
+    background: rgba(108,99,255,0.2);
+    color: #a8a0ff;
+  }
+  .add-problem-btn {
+    margin: 0 10px 10px;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px dashed var(--border2);
+    border-radius: var(--radius);
+    color: var(--text3);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .add-problem-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sidebar-nav {
+    border-top: 1px solid var(--border);
+    padding: 10px;
+  }
+  .nav-btn {
+    width: 100%;
+    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--surface2); color: var(--text); }
+
+  /* ── Main ── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--text);
+  }
+  .topbar-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--surface3); color: var(--text); }
+
+  /* ── Content panels ── */
+  #content { flex: 1; overflow-y: auto; padding: 28px; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    text-align: center;
+  }
+  .empty-glyph {
+    font-family: var(--serif);
+    font-size: 64px;
+    color: var(--surface3);
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+  .empty-title { font-size: 18px; font-weight: 500; color: var(--text2); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: var(--text3); max-width: 320px; line-height: 1.6; }
+
+  /* ── Streak bar ── */
+  .streak-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .streak-pip {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--surface3);
+    transition: background 0.2s;
+  }
+  .streak-pip.active { background: var(--accent); }
+  .streak-pip.today { background: var(--green); box-shadow: 0 0 6px rgba(62,207,142,0.4); }
+  .streak-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-left: 8px;
+  }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 12px; }
+  .entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    transition: border-color 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .entry-card:hover { border-color: var(--border2); }
+  .entry-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .entry-title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .entry-date { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .entry-outcome {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-left: 8px;
+  }
+  .outcome-better { background: var(--green-soft); color: var(--green); }
+  .outcome-mixed { background: var(--amber-soft); color: var(--amber); }
+  .outcome-worse { background: var(--red-soft); color: var(--red); }
+  .entry-section { margin-top: 12px; }
+  .entry-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .entry-section-text {
+    font-size: 13.5px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .entry-lesson {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--accent-soft);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 13px;
+    color: var(--text);
+    font-style: italic;
+    font-family: var(--serif);
+    line-height: 1.6;
+  }
+  .entry-next {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--text3);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .entry-next-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    opacity: 0;
+  }
+  .entry-card:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--red); background: var(--red-soft); }
+
+  /* ── New Entry Form ── */
+  #new-entry-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    display: none;
+    animation: slideIn 0.2s ease;
+  }
+  #new-entry-panel.open { display: block; }
+  .form-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .form-input, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  .form-input:focus, .form-textarea:focus {
+    border-color: var(--accent);
+    background: var(--surface3);
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--text3); }
+  .form-textarea { line-height: 1.7; }
+  .reflection-wrap { position: relative; }
+  .ai-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .ai-toggle-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle {
+    position: relative;
+    width: 30px;
+    height: 16px;
+    cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--surface3);
+    border-radius: 999px;
+    border: 1px solid var(--border2);
+    transition: background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 10px; height: 10px;
+    background: var(--text3);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(14px); background: #fff; }
+  .ai-prompts-box {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: none;
+  }
+  .ai-prompts-box.visible { display: block; }
+  .ai-prompt-item {
+    font-size: 13px;
+    color: var(--text2);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .ai-prompt-item:last-child { border-bottom: none; }
+  .ai-loading {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    padding: 8px 0;
+  }
+  .outcome-row { display: flex; gap: 8px; }
+  .outcome-opt {
+    flex: 1;
+    padding: 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .outcome-opt:hover { border-color: var(--border); }
+  .outcome-opt.sel-better { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  .outcome-opt.sel-mixed { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .outcome-opt.sel-worse { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+  .form-row { display: flex; gap: 10px; margin-top: 16px; }
+  .form-cancel {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 9px 16px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .form-cancel:hover { background: var(--surface2); }
+
+  /* ── New Problem Modal ── */
+  #modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    width: 380px;
+    animation: slideIn 0.2s ease;
+  }
+  .modal-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .modal-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+  .color-swatches {
+    display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .swatch {
+    width: 24px; height: 24px; border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .swatch.selected { border-color: var(--text); transform: scale(1.15); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+  /* ── Overview stats ── */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-num { font-family: var(--serif); font-size: 28px; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+
+  /* ── Overview all problems ── */
+  .overview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .overview-card:hover { border-color: var(--border2); }
+  .ov-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .ov-name { font-size: 15px; font-weight: 500; }
+  .ov-count { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-left: auto; }
+  .mini-pips { display: flex; gap: 3px; }
+  .mini-pip {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--surface3);
+  }
+  .mini-pip.done { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Loop<span>Lab</span></div>
+    <div class="logo-sub">experiment · reflect · evolve</div>
+  </div>
+  <div class="sidebar-section-label">Problem areas</div>
+  <div class="problem-list" id="problem-list"></div>
+  <button class="add-problem-btn" onclick="openAddProblem()">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Add problem area
+  </button>
+  <div class="sidebar-nav">
+    <button class="nav-btn active" id="nav-overview" onclick="showOverview()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      Overview
+    </button>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div class="topbar" id="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Overview</div>
+      <div class="topbar-meta" id="topbar-meta">All your problem loops</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-primary" id="new-entry-btn" onclick="toggleNewEntry()" style="display:none">+ New experiment</button>
+    </div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- Add Problem Modal -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">New problem area</div>
+    <div class="modal-sub">Name a recurring challenge you want to run experiments on.</div>
+    <div class="form-group">
+      <label class="form-label">Problem name</label>
+      <input class="form-input" id="prob-name-input" placeholder="e.g. Study discipline and consistency" maxlength="60">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Colour</label>
+      <div class="color-swatches" id="color-swatches"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveProblem()">Create area</button>
+      <button class="form-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#6c63ff','#3ecf8e','#f59e0b','#ef4444','#ec4899','#06b6d4','#8b5cf6','#f97316'];
+let selectedColor = COLORS[0];
+let currentView = 'overview';
+let currentProblemId = null;
+let selectedOutcome = 'better';
+let aiOn = false;
+const API_URL = 'https://api.anthropic.com/v1/messages';
+
+// ── Storage helpers ──
+function getProblems() { return JSON.parse(localStorage.getItem('ll_problems') || '[]'); }
+function saveProblems(p) { localStorage.setItem('ll_problems', JSON.stringify(p)); }
+function getEntries() { return JSON.parse(localStorage.getItem('ll_entries') || '[]'); }
+function saveEntries(e) { localStorage.setItem('ll_entries', JSON.stringify(e)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── Streak calculation ──
+function calcStreak(problemId) {
+  const entries = getEntries().filter(e => e.problemId === problemId);
+  if (!entries.length) return 0;
+  const days = [...new Set(entries.map(e => new Date(e.date).toDateString()))].sort((a,b)=>new Date(b)-new Date(a));
+  let streak = 0;
+  let cursor = new Date(); cursor.setHours(0,0,0,0);
+  for (const d of days) {
+    const day = new Date(d); day.setHours(0,0,0,0);
+    const diff = Math.round((cursor - day) / 86400000);
+    if (diff <= 1) { streak++; cursor = day; }
+    else break;
+  }
+  return streak;
+}
+
+function streakDots(problemId, count=21) {
+  const entries = getEntries().filter(e => e.problemId === problemId);
+  const activeDays = new Set(entries.map(e => new Date(e.date).toDateString()));
+  let html = '<div class="streak-bar">';
+  for (let i = count-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+    const isActive = activeDays.has(d.toDateString());
+    const isToday = i === 0;
+    html += `<div class="streak-pip${isActive ? (isToday ? ' today' : ' active') : ''}" title="${d.toLocaleDateString()}"></div>`;
+  }
+  const streak = calcStreak(problemId);
+  html += `<span class="streak-label">${streak} day streak</span></div>`;
+  return html;
+}
+
+// ── Sidebar render ──
+function renderSidebar() {
+  const problems = getProblems();
+  const list = document.getElementById('problem-list');
+  if (!problems.length) {
+    list.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);font-style:italic;">No problem areas yet</div>`;
+    return;
+  }
+  list.innerHTML = problems.map(p => {
+    const streak = calcStreak(p.id);
+    const isActive = currentView === 'problem' && currentProblemId === p.id;
+    return `<div class="problem-item${isActive?' active':''}" onclick="showProblem('${p.id}')">
+      <div class="problem-dot" style="background:${p.color}"></div>
+      <span class="problem-name">${p.name}</span>
+      ${streak > 0 ? `<span class="problem-streak">${streak}d</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Overview ──
+function showOverview() {
+  currentView = 'overview'; currentProblemId = null;
+  document.getElementById('nav-overview').classList.add('active');
+  document.getElementById('new-entry-btn').style.display = 'none';
+  document.getElementById('topbar-title').textContent = 'Overview';
+  document.getElementById('topbar-meta').textContent = 'All your problem loops';
+  renderSidebar();
+
+  const problems = getProblems();
+  const entries = getEntries();
+  const content = document.getElementById('content');
+
+  if (!problems.length) {
+    content.innerHTML = `<div class="empty-state">
+      <div class="empty-glyph">∿</div>
+      <div class="empty-title">No problem areas yet</div>
+      <div class="empty-sub">Start by adding a problem area in the sidebar — something recurring you want to experiment on and understand.</div>
+    </div>`;
+    return;
+  }
+
+  const totalEntries = entries.length;
+  const totalProblems = problems.length;
+  const allStreaks = problems.map(p => calcStreak(p.id));
+  const bestStreak = Math.max(0, ...allStreaks);
+
+  let html = `<div class="stats-row">
+    <div class="stat-card"><div class="stat-num">${totalProblems}</div><div class="stat-lbl">problem areas</div></div>
+    <div class="stat-card"><div class="stat-num">${totalEntries}</div><div class="stat-lbl">experiments run</div></div>
+    <div class="stat-card"><div class="stat-num">${bestStreak}</div><div class="stat-lbl">best streak (days)</div></div>
+  </div>`;
+
+  problems.forEach(p => {
+    const pEntries = entries.filter(e => e.problemId === p.id);
+    const streak = calcStreak(p.id);
+    const last = pEntries.length ? new Date(pEntries[pEntries.length-1].date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : 'no entries yet';
+    const recentDays = 14;
+    let pips = '';
+    for (let i=recentDays-1; i>=0; i--) {
+      const d = new Date(); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      const has = pEntries.some(e => new Date(e.date).toDateString() === d.toDateString());
+      pips += `<div class="mini-pip" style="${has?'background:'+p.color+';opacity:0.8':''}"></div>`;
+    }
+    html += `<div class="overview-card" onclick="showProblem('${p.id}')">
+      <div class="ov-head">
+        <div class="problem-dot" style="background:${p.color};width:10px;height:10px;border-radius:50%"></div>
+        <div class="ov-name" style="color:var(--text)">${p.name}</div>
+        <div class="ov-count">${pEntries.length} experiment${pEntries.length!==1?'s':''}</div>
+      </div>
+      <div class="mini-pips">${pips}</div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Last entry: ${last}</span>
+        ${streak>0?`<span style="font-family:var(--mono);font-size:11px;color:${p.color}">${streak}d streak</span>`:''}
+      </div>
+    </div>`;
+  });
+  content.innerHTML = html;
+}
+
+// ── Problem view ──
+function showProblem(id) {
+  currentView = 'problem'; currentProblemId = id;
+  const problems = getProblems();
+  const p = problems.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('nav-overview').classList.remove('active');
+  document.getElementById('new-entry-btn').style.display = '';
+  document.getElementById('topbar-title').textContent = p.name;
+  document.getElementById('topbar-meta').textContent = `${getEntries().filter(e=>e.problemId===id).length} experiments`;
+  renderSidebar();
+  renderProblemContent(id);
+}
+
+function renderProblemContent(id) {
+  const problems = getProblems();
+  const p = problems.find(x => x.id === id);
+  const entries = getEntries().filter(e => e.problemId === id).reverse();
+  const content = document.getElementById('content');
+
+  let html = streakDots(id);
+
+  // New entry form
+  html += `<div id="new-entry-panel">
+    <div class="form-title" style="color:${p.color}">New experiment</div>
+    <div class="form-group">
+      <label class="form-label">What did you try?</label>
+      <input class="form-input" id="f-title" placeholder="A short name for this experiment">
+    </div>
+    <div class="form-group">
+      <label class="form-label">What happened?</label>
+      <textarea class="form-textarea" id="f-what" rows="3" placeholder="Describe the concrete experience — what you did, what the context was, what unfolded."></textarea>
+    </div>
+    <div class="form-group">
+      <div class="ai-toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="ai-toggle" onchange="toggleAI(this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span class="ai-toggle-label" onclick="document.getElementById('ai-toggle').click()">AI reflection prompts</span>
+      </div>
+      <div class="ai-prompts-box" id="ai-prompts-box">
+        <div class="ai-loading" id="ai-loading">Generating prompts...</div>
+      </div>
+      <label class="form-label">Reflection</label>
+      <textarea class="form-textarea" id="f-reflection" rows="6" placeholder="Take your time here. What surprised you? What felt uncomfortable? What patterns are you noticing? What does this tell you about yourself?"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">What was the key lesson?</label>
+      <textarea class="form-textarea" id="f-lesson" rows="2" placeholder="Distil it to one or two sentences."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Next experiment planned</label>
+      <input class="form-input" id="f-next" placeholder="What will you try next, and when?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">How did it go?</label>
+      <div class="outcome-row">
+        <div class="outcome-opt sel-better" id="opt-better" onclick="selectOutcome('better')">Better</div>
+        <div class="outcome-opt" id="opt-mixed" onclick="selectOutcome('mixed')">Mixed</div>
+        <div class="outcome-opt" id="opt-worse" onclick="selectOutcome('worse')">Worse</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <button class="btn-primary" onclick="saveEntry()">Save experiment</button>
+      <button class="form-cancel" onclick="toggleNewEntry()">Cancel</button>
+    </div>
+  </div>`;
+
+  if (!entries.length) {
+    html += `<div class="empty-state">
+      <div class="empty-glyph" style="color:${p.color};opacity:0.3">∿</div>
+      <div class="empty-title">No experiments yet</div>
+      <div class="empty-sub">Hit "New experiment" above to log your first attempt at working on this problem.</div>
+    </div>`;
+  } else {
+    html += '<div class="timeline">';
+    entries.forEach(e => {
+      const outcomeClass = e.outcome === 'better' ? 'outcome-better' : e.outcome === 'worse' ? 'outcome-worse' : 'outcome-mixed';
+      const outcomeLabel = e.outcome === 'better' ? 'Better' : e.outcome === 'worse' ? 'Worse' : 'Mixed';
+      html += `<div class="entry-card">
+        <div class="entry-header">
+          <div>
+            <span class="entry-title">${e.title}</span>
+            <span class="entry-outcome ${outcomeClass}">${outcomeLabel}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="entry-date">${new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</span>
+            <button class="delete-btn" onclick="deleteEntry('${e.id}')" title="Delete">✕</button>
+          </div>
+        </div>
+        ${e.what ? `<div class="entry-section"><div class="entry-section-label">What happened</div><div class="entry-section-text">${e.what}</div></div>` : ''}
+        ${e.reflection ? `<div class="entry-section"><div class="entry-section-label">Reflection</div><div class="entry-section-text">${e.reflection}</div></div>` : ''}
+        ${e.lesson ? `<div class="entry-lesson">${e.lesson}</div>` : ''}
+        ${e.next ? `<div class="entry-next"><span class="entry-next-label">Next →</span><span>${e.next}</span></div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  content.innerHTML = html;
+  selectedOutcome = 'better';
+}
+
+// ── Form interactions ──
+function toggleNewEntry() {
+  const panel = document.getElementById('new-entry-panel');
+  if (!panel) return;
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('f-title').focus();
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function selectOutcome(val) {
+  selectedOutcome = val;
+  ['better','mixed','worse'].forEach(o => {
+    const el = document.getElementById('opt-'+o);
+    if (el) { el.className = 'outcome-opt' + (o===val ? ' sel-'+o : ''); }
+  });
+}
+
+async function toggleAI(on) {
+  aiOn = on;
+  const box = document.getElementById('ai-prompts-box');
+  if (!box) return;
+  if (!on) { box.classList.remove('visible'); return; }
+  box.classList.add('visible');
+  document.getElementById('ai-loading').style.display = 'block';
+  box.querySelectorAll('.ai-prompt-item').forEach(el => el.remove());
+  const problemName = getProblems().find(p => p.id === currentProblemId)?.name || 'this problem';
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: `Generate exactly 4 short, probing reflection questions for someone journaling about the problem area: "${problemName}". Questions should encourage self-awareness, pattern recognition, and emotional honesty. Return only the 4 questions, one per line, no numbering, no preamble.`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '';
+    const questions = text.trim().split('\n').filter(q => q.trim()).slice(0,4);
+    document.getElementById('ai-loading').style.display = 'none';
+    questions.forEach(q => {
+      const div = document.createElement('div');
+      div.className = 'ai-prompt-item';
+      div.textContent = q.trim();
+      box.appendChild(div);
+    });
+  } catch(err) {
+    document.getElementById('ai-loading').textContent = 'Could not load prompts — check API access.';
+  }
+}
+
+function saveEntry() {
+  const title = document.getElementById('f-title')?.value.trim();
+  if (!title) { alert('Give this experiment a name.'); return; }
+  const entry = {
+    id: uid(),
+    problemId: currentProblemId,
+    title,
+    what: document.getElementById('f-what')?.value.trim() || '',
+    reflection: document.getElementById('f-reflection')?.value.trim() || '',
+    lesson: document.getElementById('f-lesson')?.value.trim() || '',
+    next: document.getElementById('f-next')?.value.trim() || '',
+    outcome: selectedOutcome,
+    date: new Date().toISOString()
+  };
+  const entries = getEntries();
+  entries.push(entry);
+  saveEntries(entries);
+  renderProblemContent(currentProblemId);
+  renderSidebar();
+  document.getElementById('topbar-meta').textContent = `${getEntries().filter(e=>e.problemId===currentProblemId).length} experiments`;
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this experiment?')) return;
+  saveEntries(getEntries().filter(e => e.id !== id));
+  renderProblemContent(currentProblemId);
+  renderSidebar();
+}
+
+// ── Add problem modal ──
+function openAddProblem() {
+  const swatches = document.getElementById('color-swatches');
+  swatches.innerHTML = COLORS.map((c,i) =>
+    `<div class="swatch${i===0?' selected':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`
+  ).join('');
+  selectedColor = COLORS[0];
+  document.getElementById('prob-name-input').value = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('prob-name-input').focus(), 100);
+}
+
+function selectColor(color, el) {
+  selectedColor = color;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function saveProblem() {
+  const name = document.getElementById('prob-name-input').value.trim();
+  if (!name) { alert('Enter a problem name.'); return; }
+  const problems = getProblems();
+  problems.push({ id: uid(), name, color: selectedColor });
+  saveProblems(problems);
+  closeModal();
+  renderSidebar();
+  showOverview();
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') saveEntry();
+});
+document.getElementById('prob-name-input').addEventListener('keydown', e => { if(e.key==='Enter') saveProblem(); });
+
+// ── Init ──
+const problems = getProblems();
+if (!problems.length) {
+  const defaultProblem = { id: uid(), name: 'Study discipline and consistency', color: '#6c63ff' };
+  saveProblems([defaultProblem]);
+}
+showOverview();
+</script>
+</body>
+</html>
